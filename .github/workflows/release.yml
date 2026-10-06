@@ -73,7 +73,7 @@ jobs:
 
           Copy-Item $dll $steamPlugin.FullName -Force
           Copy-Item $dll $msPlugin.FullName -Force
-          Copy-Item $dll "release/MalumMenu-$env:VERSION.dll" -Force
+          Copy-Item $dll "MalumMenu-$env:VERSION.dll" -Force
 
           Compress-Archive -Path "release/steam/*" -DestinationPath "MalumMenu-$env:VERSION-Steam-Itch.zip" -Force
           Compress-Archive -Path "release/ms/*" -DestinationPath "MalumMenu-$env:VERSION-MicrosoftStore-EpicGames-XboxApp.zip" -Force
