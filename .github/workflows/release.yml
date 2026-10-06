@@ -1,0 +1,52 @@
+name: Release MalumMenu
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. 3.4.0"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark this release as a prerelease"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 6.0.x
+          cache: true
+          cache-dependency-path: src/MalumMenu.csproj
+      - name: Restore
+        run: dotnet restore src/MalumMenu.csproj
+      - name: Build
+        run: dotnet build src/MalumMenu.csproj --configuration Release --no-restore
+      - name: Package
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item "src/bin/Release/net6.0/MalumMenu.dll" "release/MalumMenu.dll"
+          if (Test-Path "src/bin/Release/net6.0/MalumMenu.pdb") { Copy-Item "src/bin/Release/net6.0/MalumMenu.pdb" "release/MalumMenu.pdb" }
+          Compress-Archive -Path "release/*" -DestinationPath "MalumMenu-v$env:VERSION.zip" -Force
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        shell: pwsh
+        run: |
+          $tag = "v$env:VERSION"
+          gh release create $tag "MalumMenu-v$env:VERSION.zip" --title "MalumMenu v$env:VERSION" --generate-notes --prerelease=${{ inputs.prerelease }}
